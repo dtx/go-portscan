@@ -140,18 +140,3 @@ func checkTCP(ip string, port string, blocker chan bool, timeout int) {
 		connection.Close()
 	}
 }
-
-/**
-func check(c *Config, ip string, port uint16) {
-	connection, err := net.DialTimeout("tcp", ip+":"+fmt.Sprintf("%d", port), time.Duration(c.TimeOut)*time.Second)
-	if err == nil {
-		c.records[fmt.Sprintf("%s:%d", ip, port)] = true
-		fmt.Println(fmt.Sprintf("%s:%d - true", ip, port))
-		connection.Close()
-	} else {
-		c.records[fmt.Sprintf("%s:%d", ip, port)] = false
-		fmt.Println(fmt.Sprintf("%s:%d - %s", ip, port, err))
-	}
-	c.running--
-}
-**/

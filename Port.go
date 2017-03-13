@@ -42,9 +42,7 @@ func main() {
 		fmt.Printf("error: %v", err)
 	}
 
-	fmt.Printf("--- config:\n%v\n\n", config)
 	CheckPort(&config)
-	//fmt.Println(config)
 }
 
 func isValidPortNumber(n int) bool {
@@ -136,7 +134,7 @@ func checkTCP(ip string, port string, blocker chan bool, timeout int) {
 	defer func() { <-blocker }()
 	connection, err := net.DialTimeout("tcp", ip+":"+port, time.Duration(timeout)*time.Second)
 	if err == nil {
-		fmt.Println(fmt.Sprintf("%s:%d - true", ip, port))
+		fmt.Printf("%s:%s - true\n", ip, port)
 		connection.Close()
 	}
 }

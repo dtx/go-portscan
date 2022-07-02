@@ -11,7 +11,7 @@ supports proxy
 
 Usage:
 ```
-$> go get github.com/dtx/go-portscan
+$> go get github.com/sinakeshmiri/goports
 $> cat << EOF > config
 --- 
 ip: 

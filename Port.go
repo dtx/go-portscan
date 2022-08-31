@@ -3,14 +3,19 @@ package main
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+	"golang.org/x/net/proxy"
+	"gopkg.in/yaml.v2"
 )
+
+var proxyFlag = false
+var proxyDialer proxy.Dialer
 
 type ipTables map[string]bool
 
@@ -22,11 +27,13 @@ type Config struct {
 	Concurrency int
 	TimeOut     int       `yaml:"timeout"`
 	IPRanges    []IPRange `yaml:"ip"`
+	Proxy       string    `yaml:"proxy"`
 }
 
 var config Config
 
 func main() {
+
 	defer func() {
 		if e := recover(); e != nil {
 			fmt.Println(e)
@@ -41,7 +48,10 @@ func main() {
 	if err != nil {
 		fmt.Printf("error: %v", err)
 	}
-
+	if config.Proxy != "" {
+		Proxy_setUp(&config)
+		proxyFlag = true
+	}
 	CheckPort(&config)
 }
 
@@ -132,9 +142,38 @@ func inc(ip net.IP) {
 
 func checkTCP(ip string, port string, blocker chan bool, timeout int) {
 	defer func() { <-blocker }()
-	connection, err := net.DialTimeout("tcp", ip+":"+port, time.Duration(timeout)*time.Second)
-	if err == nil {
-		fmt.Printf("%s:%s - true\n", ip, port)
-		connection.Close()
+	if !proxyFlag  {
+		connection, err := net.DialTimeout("tcp", ip+":"+port, time.Duration(timeout)*time.Second)
+		if err == nil {
+			fmt.Printf("%s:%s - true\n", ip, port)
+			connection.Close()
+		}
+	} else {
+
+		connection, err := proxyDialer.Dial("tcp", ip+":"+port)
+		if err == nil {
+			connection.SetDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
+			fmt.Printf("%s:%s - true\n", ip, port)
+			connection.Close()
+		}
 	}
+}
+
+func Proxy_setUp(config *Config) {
+
+	uri, err := url.Parse(config.Proxy)
+	if err != nil {
+		panic(err)
+	}
+
+	dialer, err := proxy.FromURL(uri, &net.Dialer{
+		Timeout:   3 * time.Second,
+		KeepAlive: 3 * time.Second,
+	})
+	if err != nil {
+		panic(err)
+	}
+	proxyDialer = dialer
+	return
+
 }
